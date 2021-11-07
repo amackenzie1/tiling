@@ -94,7 +94,7 @@ def integer(pieces):
         m += xsum(array[i][j] * x[j] for j in range(len(sets))) <= dist[i]
 
     m.objective = maximize(xsum(x[i]*len(sets[i]) for i in range(len(sets))))
-    status = m.optimize(max_seconds=0.1)
+    status = m.optimize(max_seconds=0.5)
 
     if status in [OptimizationStatus.OPTIMAL, OptimizationStatus.FEASIBLE]:
         return [(i, v.x) for i, v in zip(sets, m.vars) if v.x != 0]

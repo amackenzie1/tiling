@@ -319,7 +319,18 @@ class Solver:
             totems = self.solve_512(pieces)
         elif board_size == 22:
             totems = self.solve_128(pieces)
-        elif board_size <= 10:
+        elif board_size == 8:
+            squares = integer(pieces)
+            count = 0 
+            for box, num in squares:
+                for i in range(int(num)):
+                    for j in box:
+                        count += 1
+            if count == 16:
+                totems = self.big_stack(pieces, squares)
+            else:
+                totems = self.stack(pieces, size=(9, 9), beam_size=2)
+        elif board_size < 8:
             totems = self.stack(pieces, size=(board_size, board_size), beam_size=2)
             while totems == None:
                 print(board_size)
