@@ -58,6 +58,7 @@ class Solver:
 
 
     def get_badness(self, board):
+        """measure of non-convexity"""
         badness = 0
         for i, j in board:
             if i - 1 >= 0 and (i-1, j) not in board:
@@ -67,6 +68,9 @@ class Solver:
         return badness  
 
     def variations(self, piece, board, size=(4, 8)):
+        """finds the possible valid placements for a 
+        piece on the board"""
+
         variations = set()
         for j in self.rotations(piece):
             for x in range(-5, size[0]+5):
@@ -102,6 +106,10 @@ class Solver:
         return good
 
     def stack(self, pieces, size=(4, 8), beam_size=8):
+        """beam search for stacking small boards,
+        was also used for finding the tilings of the
+        4x4 and 4x8 squares we use"""
+
         beam = []
         board = set()
         totems = []
@@ -153,6 +161,7 @@ class Solver:
         return result[-1]
     
     def size(self, num_pieces):
+        """side length of the board"""
         root = math.sqrt(num_pieces*4)
         if (int(root) - root)**2 < 1e-6:
             return root 
@@ -160,6 +169,8 @@ class Solver:
             return 4 * (int(root)//4 + 1)
 
     def big_stack(self, pieces):
+        """stacking boxes of shapes 4x4 and 4x8"""
+        
         side_length = self.size(len(pieces))
         squares = integer(pieces)
         for box, num in squares:
