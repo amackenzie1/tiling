@@ -67,6 +67,70 @@ class Solver:
                 badness += 1
         return badness  
 
+    def solve_128(self, pieces):
+        totems = []
+        O = TotemAnswer(shape="O", coordinates=self.coords["O"])
+        I_normal = TotemAnswer(shape="I", coordinates=self.coords["I"])
+        I_rotated = TotemAnswer(shape="I", coordinates=[(0, 0), (0, 1), (0, 2), (0, 3)])
+        X_box = [TotemAnswer(shape="J", coordinates=[(0, 1), (0, 0), (1, 0), (2, 0)]), TotemAnswer(shape="J", coordinates=[(1, 1), (2, 1), (3, 1), (3, 0)])]
+        Y_box = [TotemAnswer(shape="L", coordinates=[(0, 2), (0, 1), (0, 0), (1, 0)]), TotemAnswer(shape="L", coordinates=[(0, 3), (1, 3), (1, 2), (1, 1)])]
+        for i in range(7):
+            shifted = self.shift(O, (0, i*2))
+            totems.append(shifted)
+            pieces.remove("O")
+
+        for j in range(1, 7):
+            shifted = self.shift(O, (j*2, 0))
+            totems.append(shifted)
+            pieces.remove("O")
+        
+        for i in range(2):
+            shifted = [self.shift(j, (14+4*i, 0)) for j in X_box]
+            totems += shifted 
+            pieces.remove("J")
+            pieces.remove("J")
+
+        for i in range(2):
+            shifted = [self.shift(j, (0, 14+4*i)) for j in Y_box]
+            totems += shifted 
+            pieces.remove("L")
+            pieces.remove("L")
+
+        for i in range(5):
+            shifted = self.shift(I_normal, (i*4 +2, 2)) 
+            totems.append(shifted)
+            pieces.remove("I")
+        
+        for j in range(5):
+            shifted = self.shift(I_rotated, (2, j*4 + 3))
+            totems.append(shifted)
+            pieces.remove("I")
+
+        inner = self.big_stack(pieces)
+        inner = [self.shift(i, (3, 3)) for i in inner]
+        totems += inner
+        return totems
+
+        
+
+    def solve_512(self, pieces):
+        totems = []
+        O = TotemAnswer(shape="O", coordinates=self.coords["O"])
+        for i in range(23):
+            shifted = self.shift(O, (0, i*2))
+            totems.append(shifted)
+            pieces.remove("O")
+        for j in range(1, 23):
+            shifted = self.shift(O, (j*2, 0))
+            totems.append(shifted)
+            pieces.remove("O")
+        
+        inner = self.big_stack(pieces)
+        inner = [self.shift(i, (2, 2)) for i in inner]
+        totems += inner
+        return totems
+        
+
     def variations(self, piece, board, size=(4, 8)):
         """finds the possible valid placements for a 
         piece on the board"""
@@ -168,11 +232,13 @@ class Solver:
         else:
             return 4 * (int(root)//4 + 1)
 
-    def big_stack(self, pieces):
+    def big_stack(self, pieces, squares=None):
         """stacking boxes of shapes 4x4 and 4x8"""
-        
+
         side_length = self.size(len(pieces))
-        squares = integer(pieces)
+        if squares == None:
+            squares = integer(pieces)
+
         for box, num in squares:
             for i in range(int(num)):
                 for j in box:
@@ -188,9 +254,12 @@ class Solver:
         fours = [i for i in squares_totems if len(i) == 4]
 
         if len(pieces) != 0:
-            leftover = self.stack(pieces, size=(4, 8), beam_size=8)
-            eights.append(leftover)
-
+            if len(pieces) <= 3:
+                leftover = self.stack(pieces, size=(4, 4), beam_size=8)
+                fours.append(leftover)
+            else:
+                leftover = self.stack(pieces, size=(4, 8), beam_size=8)
+                eights.append(leftover)
         answer = []
         x = 0
         y = 0
@@ -246,13 +315,19 @@ class Solver:
             pieces.append(i.shape)
         
         board_size =  int(math.sqrt(4*len(pieces)))
-        if board_size <= 10:
+        if board_size >= 44:
+            totems = self.solve_512(pieces)
+        elif board_size == 22:
+            totems = self.solve_128(pieces)
+        elif board_size <= 10:
             totems = self.stack(pieces, size=(board_size, board_size), beam_size=2)
             while totems == None:
+                print(board_size)
                 board_size += 1
                 totems = self.stack(pieces, size=(board_size, board_size), beam_size=2)
         else:
             totems = self.big_stack(pieces)
+
         answer = Answer(totems)
         print("Sending Answer:", answer)
         return answer
@@ -262,9 +337,8 @@ if __name__ == "__main__":
     question = Question(totems=[TotemQuestion(shape='O'), TotemQuestion(shape='J'), TotemQuestion(shape='O'), TotemQuestion(shape='I'), TotemQuestion(shape='J'), TotemQuestion(shape='L'), TotemQuestion(shape='S'), TotemQuestion(shape='J'), TotemQuestion(shape='L'), TotemQuestion(shape='J'), TotemQuestion(shape='Z'), TotemQuestion(shape='O'), TotemQuestion(shape='S'), TotemQuestion(shape='Z'), TotemQuestion(shape='J'), TotemQuestion(shape='O'), TotemQuestion(shape='J'), TotemQuestion(shape='I'), TotemQuestion(shape='S'), TotemQuestion(shape='I'), TotemQuestion(shape='Z'), TotemQuestion(shape='L'), TotemQuestion(shape='Z'), TotemQuestion(shape='L'), TotemQuestion(shape='I'), TotemQuestion(shape='I'), TotemQuestion(shape='Z'), TotemQuestion(shape='L'), TotemQuestion(shape='T'), TotemQuestion(shape='S'), TotemQuestion(shape='J'), TotemQuestion(shape='S'), TotemQuestion(shape='S'), TotemQuestion(shape='I'), TotemQuestion(shape='I'), TotemQuestion(shape='J'), TotemQuestion(shape='O'), TotemQuestion(shape='I'), TotemQuestion(shape='L'), TotemQuestion(shape='J'), TotemQuestion(shape='L'), TotemQuestion(shape='O'), TotemQuestion(shape='O'), TotemQuestion(shape='I'), TotemQuestion(shape='O'), TotemQuestion(shape='Z'), TotemQuestion(shape='S'), TotemQuestion(shape='J'), TotemQuestion(shape='T'), TotemQuestion(shape='I'), TotemQuestion(shape='Z'), TotemQuestion(shape='I'), TotemQuestion(shape='L'), TotemQuestion(shape='L'), TotemQuestion(shape='S'), TotemQuestion(shape='Z'), TotemQuestion(shape='S'), TotemQuestion(shape='J'), TotemQuestion(shape='S'), TotemQuestion(shape='T'), TotemQuestion(shape='S'), TotemQuestion(shape='J'), TotemQuestion(shape='I'), TotemQuestion(shape='L')])
     message = GameMessage(tick=1, payload=question)
     t1 = time.time()
-    s.get_answer(message)
+    #s.get_answer(message)
     print(time.time() - t1)
-    exit()
-    pieces = """S, J, I, T, I, S, J, J, L, I, L, S, Z, I, J, Z, I, I, I, T, J, L, S, L, I, Z, Z, J, J, Z, I, O, L, S, J, O, O, O, O, I, T, L, Z, O, L, O, S, O, Z, S, L, L, Z, L, T, L, J, Z, J, O, O, J, I, Z, I, O, Z, S, Z, Z, I, J, J, S, J, J, O, T, O, T, J, T, J, L, Z, Z, I, J, O, O, T, O, S, Z, Z, T, T, J, J, O, J, J, Z, I, O, L, T, O, I, I, J, L, T, T, J, T, S, L, J, O, J, J, T, S, Z, T, J, I"""
+    pieces = """T, I, I, Z, J, J, O, J, Z, S, T, J, L, I, O, L"""
     pieces = pieces.split(", ")
-    print(s.big_stack(pieces))
+    print(s.stack(pieces, size=(8,8), beam_size=256))
